@@ -6,14 +6,13 @@
 [![Downloads][downloads-badge]][downloads-link]
 [![Dependencies][dependencies-badge]][dependencies-link]
 [![Known Vulnerabilities][vulnerabilities-badge]][vulnerabilities-link]  
-[![NPM Package Quality][code-quality-badge]][code-quality-link]
+[![CodeFactor](https://www.codefactor.io/repository/github/loggin-js/loggin-js/badge)](https://www.codefactor.io/repository/github/loggin-js/loggin-js)
 [![NPM Package Size][pkg-size-badge]][pkg-size-link] <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-An easy and customizable logger for NodeJS and the Browser.  
-If you want to log easily or create some complex loggin system, this might be the tool for you!
+An easy and customizable logger for NodeJS.  
 
 ---
 
@@ -35,10 +34,21 @@ If you want to log easily or create some complex loggin system, this might be th
 
 ## News <!-- omit in toc -->
 
-- **Browser** support is beeing **deprecated**, development will be discontinued and will be removed from Loggin'JS in version `2.0.0`. It's beeing deprecated because it's limiting me on the features I could be adding to the NodeJS version.
+- **Browser** support has been **deprecated** as of version `2.0.0`. I you want you can find the latest release with browser support [here]()
+
+## Features
+- **Extensible**
+- **Lightweighted**
+- **Configure log message** & **colored** output
+- **File notifier**
+- **Http notifier**
+- **Memory notifier**: store in memory and output on demand
+- **Log levels**: log some stuff as DEBUG, INFO, or just ERRORS, etc...
 
 ## Table Of Content <!-- omit in toc -->
-
+- [Features](#features)
+  - [Installing](#installing)
+  - [Importing](#importing)
 - [Getting Started](#getting-started)
 - [Examples](#examples)
 - [Plugins](#plugins)
@@ -46,7 +56,7 @@ If you want to log easily or create some complex loggin system, this might be th
 
 Usefull links:
 
-- [Migrating to `v1.x`](https://github.com/loggin-js/loggin-js/wiki/Migrating-to-%60v1.x%60)
+- [Migrating to `v2.x`](https://github.com/loggin-js/loggin-js/wiki/Migrating-to-%60v2.x%60)
 - [Custom Loggers](https://github.com/loggin-js/loggin-js/wiki/Getting-Started#creating-custom-loggers)
 
 ### Installing
@@ -65,89 +75,69 @@ const loggin = require('loggin-js');
 import * as loggin from 'loggin-js';
 ```
 
-#### Browser <!-- omit in toc -->
-
-> #### !! NOTICE !!
->
-> Loggin'JS can be used in the browser, but it's still in it's early stages, and the API may change or have errors.
-
-> It is also limited. For now, only the `console` notifier works. Color is not working either!
-
-```html
-<!-- Import from node_modules -->
-<script src="node_modules/loggin-js/dist/loggin.js"></script>
-
-<script>
-  LogginJS.logger();
-</script>
-```
-
-> You can also use a CDN:
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/loggin-js@latest/dist/loggin.js"></script>
-```
-
 ## Getting Started
 
 The default logger is the simplest way to use Loggin'JS.
 
 ```js
-loggin.debug(
-  'Check this log out!!',
-  { foo: 'var' },
-  { channel: 'my-logger' }
-);
+loggin.debug('Check this debug message out!!');
+loggin.error('Check this error out!!');
+loggin.alert('Check this alert out!!');
 ```
 
 ![Example Output 1](./.github/output-images/example-1.png)
 
-Additionaly you can create a custom logger:
+Or if you want to have more control you can create a custom logger, as follows:
 
 ```js
 const logger = loggin.logger({
-  level: loggin.severity('info'), // Will output only info level and below
+  level: loggin.severity('info'),
   channel: 'demo-1',
   formatter: 'long',
 });
+```
+* `level` defines which logs are outputted.
+* `channel` specifies the scope/context/origin of this log, ie: `file-loader`, `kernel`
+* `formatter` how will the log be formatted before outputting it
+  * There are some formatters available, like `json`, `short`, `medium`  
 
+After creating a custom logger you can use it as the default one:
+```js
 logger.user('Jhon');
 logger.color(true);
 
 logger.debug('Debug message, will not output');
 logger.info('Info message, will output');
+```
 
-// You can override options when executing .log or any default methods (ie: debug, info, etc...)
+You can also override options when calling `.log` or any default methods (ie: debug, info, etc...)
+```js
 logger.error('There was an <%rERROR>', null, { user: 'Bob' });
 ```
 
 ![](./.github/output-images/custom.png)
 
-You can also log to a file:
+**Output channels**
+
+In addition to loggin to the console, you can also log to a file:
 
 ```js
-const logger = loggin.logger('file');
-logger.channel('my-logger');
-
-logger.getNotifier('file').pipe(loggin.pipe('DEBUG', './debug.log'));
-
-loggin.debug('Check this log out!!', { foo: 'var' });
+const fileNotifier = loggin.notifier('file');
+const logger = loggin.logger().notifier(fileNotifier);
 ```
 
-Or output log in JSON format:
-
+Defining different files per type of log:
 ```js
-const logger = loggin.logger({
-  formatter: 'json',
-});
-
-logger.error('this is an error');
+fileNotifier
+  .pipe(loggin.severity('error'), './error.log'))
+  .pipe(loggin.severity('debug'), './debug.log'));
 ```
 
-> There are a couple of default Notifiers available:
->
-> - **NodeJS**: `file`, `console`, `http`, `memory`
-> - **Browser**: `console`, `http`
+Default Notifiers available:
+- `file`
+- `console`
+- `http`
+- `memory`
 
 Chek out the [wiki](https://github.com/loggin-js/loggin-js/wiki) for a more detailed guide.
 

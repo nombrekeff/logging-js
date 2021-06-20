@@ -1,10 +1,10 @@
 
 const path = require('path');
 const fs = require('fs');
-const url = require('url');
 const phin = require('phin');
+const Pipe = require('./pipe');
 
-function mkDirByPathSync(targetDir, { isRelativeToScript = false } = {}) {
+function createFile(targetDir, { isRelativeToScript = false } = {}) {
     const sep = path.sep;
     const initDir = path.isAbsolute(targetDir) ? sep : '';
     const baseDir = isRelativeToScript ? __dirname : '.';
@@ -33,9 +33,7 @@ function mkDirByPathSync(targetDir, { isRelativeToScript = false } = {}) {
     }, initDir);
 }
 
-function plugin(loggin) {
-    const { Notifier, Pipe } = loggin;
-
+function plugin({ Notifier, notifierRegistry }) {
     class ConsoleNotifier extends Notifier {
         constructor(options) {
             super(options, 'console');
@@ -44,12 +42,14 @@ function plugin(loggin) {
 
         output(log) {
             let logOut = log;
+
             if (this.options.lineNumbers) {
                 logOut = this.getLineWithNumber(log);
             }
 
-            // Dont remove
+            // Don't remove
             console.log(logOut);
+
             return this;
         }
     }
@@ -58,29 +58,33 @@ function plugin(loggin) {
         constructor(options) {
             super(options, 'file');
 
-            // Setup default pipe if filepath is passed for options.level
+            this.pipes = [];
+
+            // Setup default pipe for options.level if filepath is passed in 
             if (this.options.filepath) {
-                this.pipes.push(new Pipe(options.level, this.options.filepath));
+                this.pipes.push(
+                    new Pipe(options.level, this.options.filepath)
+                );
             }
 
-            // Setup pipes passed in options
             if (this.options.pipes) {
-                this.options.pipes.forEach((pipe, index) => {
-                    if (!(pipe instanceof Pipe)) throw new Error(`ERROR: "options.pipes[${index}]" should be a loggin.Pipe instance.`);
-                });
+                this.options.pipes.forEach(this._throwIfNotPipe);
                 this.pipes = this.options.pipes.concat(this.pipes);
             }
-            return this;
         }
 
         getPipe(level) {
-            let closest = 200000;
+            let closest = Infinity;
             let returnPipe = null;
+
             for (let index = 0; index < this.pipes.length; index++) {
                 const pipe = this.pipes[index];
-                if (pipe.englobes(level) && (closest != 0 && level.level - pipe.severity.level < closest)) {
+                const diff = level.level - pipe.severity.level;
+                const isClosest = (closest != 0 && diff < closest);
+
+                if (pipe.englobes(level) && isClosest) {
                     returnPipe = pipe;
-                    closest = level.level - pipe.severity.level;
+                    closest = diff;
                 }
             }
 
@@ -88,7 +92,8 @@ function plugin(loggin) {
         }
 
         getFile(level) {
-            let pipe = this.getPipe(level);
+            const pipe = this.getPipe(level);
+
             if (pipe) {
                 return pipe.filepath;
             }
@@ -97,46 +102,31 @@ function plugin(loggin) {
         }
 
         output(message, log) {
-            let logOut = message;
-            let level = log.level;
+            const logOut = message;
+            const level = log.level;
 
             if (!this.pipes.length) {
                 throw new Error('"options.pipes" cannot be empty and must be an array of pipes');
             }
 
-            for (let index = 0; index < this.pipes.length; index++) {
-                const pipe = this.pipes[index];
+            for (let pipe of this.pipes) {
                 if (pipe.englobes(level)) {
+                    this._createPathIfNotExists(pipe.filepath);
+                    const logMessage = this._addLineNumbersIfSet(pipe.filepath, logOut);
+                    const fileExists = fs.existsSync(pipe.filepath);
 
-                    // Create path if it does not exist
-                    let path_ = path.dirname(pipe.filepath);
-                    if (!fs.existsSync(path_)) {
-                        mkDirByPathSync(path_);
-                    }
-
-                    // Add line numbers is set
-                    if (this.options.lineNumbers) {
-                        let lines = 0;
-                        if (fs.existsSync(pipe.filepath)) {
-                            lines = fs.readFileSync(pipe.filepath).toString()
-                                .split('\n').length;
-                        }
-                        this.lineIndex = lines;
-                        logOut = this.getLineWithNumber(logOut);
-                    }
-
-                    if (!fs.existsSync(pipe.filepath)) {
+                    if (!fileExists) {
                         fs.writeFileSync(pipe.filepath, '');
                     }
 
                     // Create path if it does not exist
-                    fs.appendFileSync(pipe.filepath, `${logOut}\n`);
+                    fs.appendFileSync(pipe.filepath, `${logMessage}\n`);
                 }
             }
         }
 
         canOutput(level) {
-            let filepath = this.getFile(level);
+            const filepath = this.getFile(level);
             return !!filepath;
         }
 
@@ -144,25 +134,53 @@ function plugin(loggin) {
             this.pipes.push(new Pipe(level, filepath));
             return this;
         }
+
+        _createPathIfNotExists(targetPath) {
+            const candidatePath = path.dirname(targetPath);
+            const fileExists = fs.existsSync(candidatePath);
+
+            if (!fileExists) {
+                createFile(candidatePath);
+            }
+        }
+
+        _addLineNumbersIfSet(path, logOut) {
+            if (this.options.lineNumbers) {
+                let lines = 0;
+
+                if (fs.existsSync(path)) {
+                    lines = fs.readFileSync(path).toString()
+                        .split('\n').length;
+                }
+                this.lineIndex = lines;
+
+                return this.getLineWithNumber(logOut);
+            }
+
+            return logOut;
+        }
+
+        _throwIfNotPipe(pipe, index) {
+            const isPipe = pipe instanceof Pipe;
+
+            if (!isPipe) {
+                throw new Error(
+                    `ERROR: "options.pipes[${index}]" should be a loggin.Pipe instance.`
+                );
+            }
+        }
     }
 
     class HttpNotifier extends Notifier {
         constructor(options) {
             super(options, 'http');
             this.headers = this.options.headers || {};
-            this.url = new url.URL(this.options.url || 'https://localhost:3000');
-
-            if (!this.options.url) {
-                this.url.protocol = this.options.protocol;
-                this.url.host = this.options.host;
-                this.url.port = this.options.port;
-                this.url.pathname = this.options.path;
-            }
+            this.url = this.options.url
         }
 
         async output(logMsg, log) {
             return await phin({
-                url: this.url.toString(),
+                url: this.url,
                 method: 'POST',
                 headers: this.headers,
                 data: {
@@ -203,16 +221,15 @@ function plugin(loggin) {
         }
 
         dumpToFile(filepath) {
-
             if (!filepath) {
                 throw new Error('filepath is required');
             }
 
-            let str = this.getMemoryLogs().string();
+            const str = this.getMemoryLogs().string();
+            const fileExists = fs.existsSync(filepath);
 
-            // Create file if it does not exist
-            if (!fs.existsSync(filepath)) {
-                mkDirByPathSync(filepath);
+            if (!fileExists) {
+                createFile(candidatePath);
             }
 
             console.log('Log dump file can be found at: ' + filepath);
@@ -220,7 +237,8 @@ function plugin(loggin) {
         }
 
         dumpToConsole() {
-            let logs = this.getMemoryLogs().array();
+            const logs = this.getMemoryLogs().array();
+
             for (let log of logs) {
                 process.stdout.write(log + '\n');
             }
@@ -232,11 +250,13 @@ function plugin(loggin) {
         }
     }
 
-    Notifier.register('Console', ConsoleNotifier);
-    Notifier.register('File', FileNotifier);
-    Notifier.register('Http', HttpNotifier);
-    Notifier.register('Remote', RemoteNotifier);
-    Notifier.register('Memory', MemoryNotifier);
-};
+    notifierRegistry
+        .register('Console', ConsoleNotifier)
+        .register('Default', ConsoleNotifier)
+        .register('File', FileNotifier)
+        .register('Http', HttpNotifier)
+        .register('Remote', RemoteNotifier)
+        .register('Memory', MemoryNotifier);
+}
 
 module.exports = plugin;

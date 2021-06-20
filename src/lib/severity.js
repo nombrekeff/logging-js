@@ -1,4 +1,7 @@
 'use strict';
+
+const EmptyRegistry = require('./registry/empty-registry');
+
 class Severity {
   constructor(level, name) {
     this.level = level;
@@ -15,10 +18,6 @@ class Severity {
     );
   }
 
-  getFileLoggingLevel() {
-    return this.fileLogginLevel;
-  }
-
   toString() {
     return String(this.name).substr(0, 3);
   }
@@ -30,36 +29,8 @@ class Severity {
   valueOf() {
     return this.toInt();
   }
-
-  static search(value) {
-    for (let key in Severity._severities) {
-      let severity = Severity._severities[key];
-      if (severity.level === value || (severity.name).toLowerCase() === String(value).toLowerCase()) {
-        return severity;
-      }
-    }
-
-    return null;
-  }
-
-  static get(level) {
-    if (level && level.constructor.name === 'Severity') {
-      return level;
-    }
-
-    return Severity.search(level);
-  }
-
-  static register(level, name) {
-    if (typeof name !== 'string') {
-      throw new Error('"name" must be a string got: ' + typeof name);
-    }
-    Severity[name] = Severity._severities[name] = new Severity(level, name);
-
-    return Severity;
-  }
 }
 
-Severity._severities = {};
+Severity.registry = new EmptyRegistry();
 
 module.exports = Severity;

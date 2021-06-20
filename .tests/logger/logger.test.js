@@ -1,7 +1,7 @@
 /**
 * @jest-environment node
 */
-let loggin = require('../../src/node');
+let loggin = require('../../src/index');
 
 describe('loggin.Logger', () => {
   let logger = loggin.logger('default');
@@ -93,7 +93,9 @@ describe('loggin.Logger', () => {
   it(`.formatter should set correctly in notifiers`, () => {
     let logger = loggin.logger('default');
     let formatter = loggin.formatter('minimal');
+    
     logger.formatter(formatter);
+
     expect(() => {
       logger._notifiers.forEach(notif => {
         if (notif.options.formatter != formatter) {

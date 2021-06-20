@@ -1,4 +1,4 @@
-const loggin = require('../../src/node');
+const loggin = require('../../src/index');
 
 describe('loggin.Logger strict', () => {
     it(`.strict(true) should work`, () => {

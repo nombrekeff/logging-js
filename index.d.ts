@@ -2,10 +2,18 @@
 // import strif = require('strif');
 
 export type SupportedLoggers = 'console' | 'file' | 'remote' | 'memory' | 'default';
-export type SupportedSeverities = 'DEFAULT' | 'DEBUG' | 'INFO' | 'NOTICE' | 'WARNING' | 'ERROR' | 'CRITICAL' | 'ALERT' | 'EMERGENCY';
+export type SupportedSeverities =
+  | 'DEFAULT'
+  | 'DEBUG'
+  | 'INFO'
+  | 'NOTICE'
+  | 'WARNING'
+  | 'ERROR'
+  | 'CRITICAL'
+  | 'ALERT'
+  | 'EMERGENCY';
 export type SupportedFormatters = 'short' | 'medium' | 'long' | 'detailed' | 'minimal' | 'json' | 'default';
 const strif: any;
-
 
 export class Log {
   message: string;
@@ -20,6 +28,7 @@ export class Log {
 }
 
 export class Formatter {
+  static registry;
   constructor(template: strif.StrifTemplate);
 
   /**
@@ -36,42 +45,10 @@ export class Formatter {
    * Format a log through any formatter
    */
   static format(log: Log, formatter: Formatter, color: boolean): string;
-
-  /**
-   * Alias for search
-   */
-  static get(value: any): Formatter;
-
-  /**
-   * Searches and tries to find a formatter
-   */
-  static search(value: any): Formatter;
-
-  /**
-   * Register a new Formatter, can then be used as any other Formatter
-   * 
-   * @example
-   * Formatter.register(
-   *   'CUSTOM',
-   *   '{prop}', {
-   *     props: { }
-   *   }
-   * );
-   * 
-   * logger.formatter('CUSTOM');
-   * logger.formatter(Formatter.CUSTOM);
-   * logger.formatter(Formatter.get('CUSTOM'));
-   */
-  static register(val: any): Formatter;
-
-
-  /**
-   * This is kinda weird, need to refactor, PR's welcome
-   */
-  static replaceables: [{ regexp: RegExp, fn: (str: string) => string }];
 }
 
 export class Logger {
+  static registry: LoggerRegistry;
   constructor(options: LoggerOptions);
 
   enabled(enabled?: boolean): this;
@@ -107,11 +84,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  log(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
+  log(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to DEBUG
@@ -119,11 +92,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  debug(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
+  debug(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to WARNING
@@ -131,11 +100,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  warning(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
+  warning(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to EMERGENCY
@@ -143,11 +108,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  emergency(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
+  emergency(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to CRITICAL
@@ -155,11 +116,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  critical(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
+  critical(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to ERROR
@@ -167,11 +124,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  error(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
+  error(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to NOTICE
@@ -179,12 +132,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  notice(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
-
+  notice(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to INFO
@@ -192,11 +140,7 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  info(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
+  info(message: string, data?: any, options?: LogOptions): this;
 
   /**
    * @description Logs with severity set to SILLY
@@ -204,30 +148,8 @@ export class Logger {
    * @param data - some data to log
    * @param options - overwrite options for that specific log
    */
-  silly(
-    message: string,
-    data?: any,
-    options?: LogOptions
-  ): this;
-
-  static get(opts: string, args: any): Logger;
+  silly(message: string, data?: any, options?: LogOptions): this;
   static merge(loggers, opts: any): Logger;
-
-  /**
-   * Searches and tries to find a formatter
-   */
-  static search(value: any): Logger;
-
-  /**
-   * Register a new Logger, with a default Notifier attached, can then be used as any other Logger
-   * 
-   * @example
-   * Logger.register('console', 'Console');
-   * ...
-   * 
-   * logger.logger('console');
-   */
-  static register(name: string, notifier: string);
 }
 
 export class LogOptions {
@@ -262,37 +184,7 @@ export class LoggerOptions {
 export class Severity {
   constructor(level: number, name: string, englobes: Severity[], fileLogginLevel: Severity);
 
-  static EMERGENCY: Severity;
-  static ALERT: Severity;
-  static CRITICAL: Severity;
-  static ERROR: Severity;
-  static WARNING: Severity;
-  static NOTICE: Severity;
-  static INFO: Severity;
-  static DEBUG: Severity;
-
-  /**
-   * Alias for search
-   */
-  static get(level: number | string | Severity): Severity;
-
-  /**
-   * Searches and tries to find a severity maching level
-   */
-  static search(level: number | string): Severity;
-
-  /**
-   * Register a new Severity, can then be used as any other Severity
-   * 
-   * @example
-   * Severity.register(10, 'CUSTOM');
-   * ...
-   * 
-   * logger.level('CUSTOM');
-   * logger.level(Severity.CUSTOM);
-   * logger.level(Severity.get(10));
-   */
-  static register(level: number, name: string);
+  static registry;
 
   level: number;
   name: string;
@@ -301,9 +193,9 @@ export class Severity {
 
   /**
    * Check wether this severity englobes another `severity`.
-   * 
-   * Following standard rfc3164 Severity levels go from 0-7, a level will log itself and any level below  
-   * i.e: A level of `7` _DEBUG_ will log all logs as its the higher value 
+   *
+   * Following standard rfc3164 Severity levels go from 0-7, a level will log itself and any level below
+   * i.e: A level of `7` _DEBUG_ will log all logs as its the higher value
    */
   canLog(severity: Severity): boolean;
 
@@ -321,6 +213,8 @@ export class Severity {
 export class Notifier {
   constructor(options: Options);
 
+  static registry;
+
   canOutput(level: Severity): boolean;
   level(level?: number | string | Severity): this;
   formatter(str?: string): this;
@@ -333,32 +227,7 @@ export class Notifier {
   pipe?(severity: Severity, filepath: string): this;
 
   options: Options;
-
-  /**
-   * Alias for search
-   */
-  static get(opts?: Options): Notifier;
-  static get(value?: string, opts?: Options): Notifier;
-
-  /**
-   * Searches and tries to find a formatter
-   */
-  static search(value: any): Notifier;
-
-  /**
-   * Register a new Notifier, can then be used as any other Notifier
-   * 
-   * @example
-   * Notifier.register('CUSTOM', class {});
-   * ...
-   * 
-   * logger.notifier('CUSTOM');
-   * logger.notifier(notifier.CUSTOM);
-   * logger.notifier(notifier.get('CUSTOM'));
-   */
-  static register(name: string, ctor: Function);
 }
-
 
 interface Options extends LoggerOptions {
   filepath?: string;
@@ -400,6 +269,32 @@ export function formatter(template?: strif.StrifTemplate): Formatter;
 
 export function pipe(level: string, filepath: string): Pipe;
 export function use(plugin: (loggin: any) => void): void;
+
+export class Registry {
+  add(name: string, instance: any);
+  register(name: string, instance: string, options: any);
+  get(name: string);
+  search(name: string);
+}
+
+export class LoggerRegistry extends Registry {
+  add(name: string, instance: any): LoggerRegistry;
+  register(name: string, notifierName: string): LoggerRegistry;
+
+  get(name: string, opts: any): Logger;
+  get(name: any, opts: any): Logger;
+  search(name: string): Logger;
+}
+
+export class NotifierRegistry extends Registry {
+  add(name: string, instance: any): LoggerRegistry;
+  register(name: string, notifierName: string): LoggerRegistry;
+
+  get(name: string, opts: any): Logger;
+  get(name: any, opts: any): Logger;
+  search(name: string): Logger;
+}
+
 
 export default interface LogginJS {
   logger(name?: SupportedLoggers, opts?: LoggerOptions): Logger;

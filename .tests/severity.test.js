@@ -1,7 +1,7 @@
 /**
 * @jest-environment node
 */
-let loggin = require('../src/node');
+let loggin = require('../src/index');
 
 describe('loggin.Severity', () => {
     it(`Class should be defined`, () => {
@@ -20,11 +20,26 @@ describe('loggin.Severity', () => {
     });
 
     it(`test severity filtering (strict))`, () => {
-        let debug = loggin.severity('debug', { strict: true });
-        let info = loggin.severity('info', { strict: true });
+        const debug = loggin.severity('debug', { strict: true });
+        const info = loggin.severity('info', { strict: true });
 
         expect(debug.canLog(debug)).toBe(true);
         expect(debug.canLog(info)).toBe(false);
         expect(info.canLog(debug)).toBe(false);
+    });
+
+
+    it(`.getInt works`, () => {
+        const info = loggin.severity('info');
+        const debug = loggin.severity('debug');
+        expect(info.toInt()).toBe(6);
+        expect(debug.toInt()).toBe(7);
+    });
+
+    it(`.valueOf works`, () => {
+        const info = loggin.severity('info');
+        const debug = loggin.severity('debug');
+        expect(info.valueOf()).toBe(6);
+        expect(debug.valueOf()).toBe(7);
     });
 });

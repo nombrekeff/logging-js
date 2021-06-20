@@ -1,7 +1,7 @@
-const logging = require('../..');
+const { logger, Formatter } = require('../../src');
 
 // You can add a new formatter by registering it as follows:
-logging.Formatter.register(
+Formatter.registry.register(
   'CUSTOM',
   '{time} - {user} | {channel} - {level} - {message} {data}', {
   props: {
@@ -20,19 +20,18 @@ logging.Formatter.register(
     channel: {},
     message: {},
   }
-}
-);
+});
 
-const logger = logging.logger({
+const myLogger = logger({
   formatter: 'custom'
 });
 
 // Available predefined log levels
-logger.info('info', {
+myLogger.info('info', {
   user: 'pedro',
   id: 10
 });
-logger.error('error');
-logger.info('info', { data: 'Hi' });
-logger.alert('alert');
-logger.emergency('emergency');
+myLogger.error('error');
+myLogger.info('info', { data: 'Hi' });
+myLogger.alert('alert');
+myLogger.emergency('emergency');

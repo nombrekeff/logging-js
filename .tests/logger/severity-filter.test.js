@@ -1,12 +1,12 @@
 /**
 * @jest-environment node
 */
-let loggin = require('../../src/node');
+const loggin = require('../../src/index');
 const MockNotifier = require('../mocks/notifier.mock');
 
 describe('loggin.Logger severity filtering (debug)', () => {
-    let notifier = new MockNotifier();
-    let logger = loggin.logger({
+    const notifier = new MockNotifier();
+    const logger = loggin.logger({
         notifiers: [notifier],
         level: loggin.severity('debug'),
     });
@@ -26,18 +26,18 @@ describe('loggin.Logger severity filtering (debug)', () => {
 });
 
 describe('loggin.Logger severity filtering (error)', () => {
-    let notifier = new MockNotifier();
-    let logger = loggin.logger({
+    const notifier = new MockNotifier();
+    const logger = loggin.logger({
         notifiers: [notifier],
-        level: loggin.severity('error'),
+        level: 'error',
     });
 
     it(`debug should not output`, () => {
         notifier.clear();
+        logger.level('error');
         logger.debug('hey', null, { time: 100000000, channel: 'test' });
         expect(notifier.logs.length).toEqual(0);
     });
-
 
     it(`error should output correctly`, () => {
         notifier.clear();

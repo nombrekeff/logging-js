@@ -2,7 +2,13 @@
 /.tests
 /.github
 /logs
+/log
 /node_modules
+/test-remote/logs
+/examples/package*.json
+/examples/node_modules
+/tests
+/internal
+*.log
 /coverage
-.travis.yml
-CHANGELOG.md
+/coverage/*

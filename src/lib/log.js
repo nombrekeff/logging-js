@@ -2,26 +2,27 @@
 const Severity = require('./severity');
 const Formatter = require('./formatter');
 
-
 class Log {
-  constructor(message, data, level = Severity.DEBUG, channel = '', time = new Date(), user) {
+  constructor(message, data, level, channel = '', time = new Date(), user) {
+    if (!(level instanceof Severity)) {
+      throw new Error(`'level' must be an instance of Severity`);
+    }
+
     this.message = message;
     this.data = data;
     this.level = level;
     this.channel = channel;
-    this.levelStr = level.toString();
     this.time = time;
     this.user = user;
+    this.levelStr = level.toString();
   }
 
   /**
    * Returns formatted log
    * @param {string} formatter
    */
-  format(formatter, opts = {
-    color: false
-  }) {
-    let {
+  format(formatter, { color = false } = {}) {
+    const {
       message,
       data,
       level,
@@ -39,7 +40,7 @@ class Log {
       levelStr,
       time,
       user,
-    }, formatter, opts.color);
+    }, formatter, color);
   }
 
   static fromObject(obj) {

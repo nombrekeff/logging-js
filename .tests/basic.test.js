@@ -2,7 +2,7 @@
 * @jest-environment node
 */
 
-let loggin = require('../src/node');
+let loggin = require('../src/index');
 
 describe('loggin should be defined', () => {
   it(`loggin should`, () => {
@@ -69,5 +69,11 @@ describe('loggin.logger', () => {
 describe('loggin should be instance of Logger', () => {
   it(`instance`, () => {
     expect(loggin).toBeInstanceOf(loggin.Logger);
+  });
+});
+
+describe('loggin.use', () => {
+  it(`fails if no function passed in`, () => {
+    expect(() => loggin.use()).toThrow();
   });
 });

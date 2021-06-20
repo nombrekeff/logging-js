@@ -1,19 +1,20 @@
 /**
 * @jest-environment node
 */
-let loggin = require('../..');
-let fs = require('fs');
-let filePath = '../logs/test-file.log';
-let fileErrorPath = '../logs/error-file.log';
+const loggin = require('../../src/index');
+const fs = require('fs');
+const Pipe = require('../../src/plugins/pipe');
+const filePath = './logs/test-file.log';
+const fileErrorPath = './logs/error-file.log';
 
 describe('loggin.Notifier.File tests', () => {
     it(`should be registered`, () => {
-        expect(loggin.Notifier.File).toBeDefined();
+        expect(loggin.Notifier.registry.has('file')).toBeDefined();
     });
 
     it(`should construct notifier correctly`, () => {
         expect(() => {
-            let notif = new loggin.Notifier.File();
+            const notif = loggin.Notifier.registry.get('file', {});
         }).not.toThrow();
     });
 
@@ -22,12 +23,12 @@ describe('loggin.Notifier.File tests', () => {
     });
 
     it(`should log correctly to file`, () => {
-        let notif = loggin.notifier('file', {
-            pipes: [loggin.pipe(loggin.severity('debug'), filePath)]
+        const notif = loggin.notifier('file', {
+            pipes: [new Pipe(loggin.severity('debug'), filePath)]
         });
         notif.pipe(loggin.severity('error'), fileErrorPath);
 
-        let log = new loggin.Log('Test', null, loggin.severity('DEBUG'));
+        const log = new loggin.Log('Test', null, loggin.severity('DEBUG'));
         notif.output(log.message, log);
 
         const fileData = fs.readFileSync(filePath).toString().trim();

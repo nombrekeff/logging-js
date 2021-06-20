@@ -2,7 +2,7 @@
 * @jest-environment node
 */
 
-const { Notifier, Logger, Formatter, Severity } = require('../src/node');
+const { Notifier, Logger, Formatter, Severity } = require('../src/index');
 
 const AdditionalNotifiers = ['Console', 'File', 'Http', 'Memory'];
 const AdditionalLoggers = AdditionalNotifiers.map(el => el.toLocaleLowerCase());
@@ -12,7 +12,7 @@ const AdditionalSeverities = ['EMERGENCY', 'ALERT', 'CRITICAL', 'ERROR', 'WARNIN
 describe('AdditionalNotifiers', () => {
     it(`should be registered`, () => {
         for (let notifName of AdditionalNotifiers) {
-            expect(Notifier._notifiers[notifName]).toBeDefined();
+            expect(Notifier.registry.has(notifName)).toBeDefined();
         }
     });
 });
@@ -20,23 +20,23 @@ describe('AdditionalNotifiers', () => {
 describe('AdditionalLoggers', () => {
     it(`should be registered`, () => {
         for (let loggerName of AdditionalLoggers) {
-            expect(Logger._loggers[loggerName]).toBeDefined();
+            expect(Logger.registry.has(loggerName)).toBeDefined();
         }
     });
 });
 
 describe('AdditionalFormatters', () => {
     it(`should be registered`, () => {
-        for (let formatter of AdditionalFormatters) {
-            expect(Formatter._formatters[formatter]).toBeDefined();
+        for (let formatterName of AdditionalFormatters) {
+            expect(Formatter.registry.has(formatterName)).toBeDefined();
         }
     });
 });
 
 describe('AdditionalSeverities', () => {
     it(`should be registered`, () => {
-        for (let severity of AdditionalSeverities) {
-            expect(Severity._severities[severity]).toBeDefined();
+        for (let severityName of AdditionalSeverities) {
+            expect(Severity.registry.has(severityName)).toBeDefined();
         }
     });
 });

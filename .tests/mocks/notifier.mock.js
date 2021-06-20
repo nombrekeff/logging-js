@@ -1,4 +1,4 @@
-let loggin = require('../../src/node');
+let loggin = require('../../src/index');
 
 class MockNotifier extends loggin.Notifier {
     constructor(options) {

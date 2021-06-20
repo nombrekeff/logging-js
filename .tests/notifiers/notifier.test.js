@@ -1,9 +1,9 @@
 /**
 * @jest-environment node
 */
-let loggin = require('../../src/node');
+let loggin = require('../../src/index');
 
-describe('loggin.Notifier tests', () => {
+describe('loggin.Notifier', () => {
   it(`should be defined`, () => {
     expect(loggin.Notifier).toBeDefined();
   });
@@ -21,14 +21,6 @@ describe('loggin.Notifier tests', () => {
         level: sev
       });
     }).not.toThrow();
-  });
-
-  it(`instance with incorrect severity throws`, () => {
-    expect(() => {
-      new loggin.Notifier({
-        level: 12
-      });
-    }).toThrow();
   });
 
   it(`Sets options correctly`, () => {
@@ -63,19 +55,48 @@ describe('loggin.Notifier tests', () => {
     expect(line).toEqual('(0) test');
   });
 
-  it(`instance with incorrect pipes throws`, () => {
-    expect(() => {
-      new loggin.Notifier({
-        pipes: [{}]
-      });
-    }).toThrow();
-  });
-
   it(`instance with string formatter`, () => {
     expect(() => {
       new loggin.Notifier({
         formatter: 'detailed'
       });
     }).not.toThrow();
+  });
+
+  it(`canOutput(level: debug) == true`, () => {
+    const notifier = loggin.notifier('default');
+    notifier.level(loggin.severity('DEBUG'));
+
+    expect(notifier.canOutput({ level: loggin.severity('DEBUG') })).toEqual(true);
+  });
+
+  it(`canOutput(level: error) == false`, () => {
+    const notifier = loggin.notifier('default');
+    notifier.level(loggin.severity('ERROR'));
+
+    expect(notifier.canOutput({ level: loggin.severity('DEBUG') })).toEqual(false);
+  });
+
+
+
+  it(`preNotify`, () => {
+    const notifier = loggin.notifier('default');
+    notifier.level(loggin.severity('ERROR'));
+    notifier.options.preNotify = () => true;
+
+    spyOn(notifier.options, 'preNotify');
+
+    const log = new loggin.Log("test", null, loggin.Severity.registry.get('debug'));
+    notifier.notify(log)
+
+    expect(notifier.options.preNotify).toHaveBeenCalled();
+  });
+
+  it(`ignore`, () => {
+    const notifier = loggin.notifier('default');
+    notifier.level(loggin.severity('ERROR'));
+    notifier.options.ignore = () => true;
+
+    expect(notifier.canOutput({ level: loggin.severity('DEBUG') })).toEqual(false);
   });
 });

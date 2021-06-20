@@ -3,9 +3,10 @@
  */
 function plugin(loggin) {
     const { Formatter } = loggin;
-    Formatter.register(
+    Formatter.registry.register(
         'CUSTOM',
-        '[{time} {user}] - {level} - {message} {data}', {
+        '[{time} {user}] - {level} - {message} {data}',
+        {
             props: {
                 time: {
                     transformers: ['date', 'cl_blue']

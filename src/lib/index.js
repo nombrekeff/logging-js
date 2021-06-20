@@ -5,33 +5,35 @@ const Notifier = require('./notifier');
 const Formatter = require('./formatter');
 const Severity = require('./severity');
 const Log = require('./log');
-const Pipe = require('./pipe');
+
+const FormatterRegistry = require('./registry/formatter-registry');
+const SeverityRegistry = require('./registry/severity-registry');
+const NotifierRegistry = require('./registry/notifier-registry');
+const LoggerRegistry = require('./registry/logger-registry');
+
+const formatterRegistry = new FormatterRegistry();
+const severityRegistry = new SeverityRegistry();
+const notifierRegistry = new NotifierRegistry();
+const loggerRegistry = new LoggerRegistry(notifierRegistry);
+
 
 function logger(opts = 'default', args = {}) {
-  return Logger.get(opts, args);
+  return Logger.registry.get(opts, args);
 }
 
 function notifier(opts = 'default', args = {}) {
-  return Notifier.get(opts, args);
+  return Notifier.registry.get(opts, args);
 }
 
 function formatter(template = 'default') {
-  return Formatter.get(template);
+  return Formatter.registry.get(template);
 }
 
-function severity(level, { strict } = { strict: false }) {
-  const severity = Severity.get(level);
+function severity(level, { strict = false } = {}) {
+  const severity = Severity.registry.get(level);
   severity.strict = strict;
-  
+
   return severity;
-}
-
-function merge(loggers, options) {
-  return Logger.merge(loggers, options);
-}
-
-function pipe(level, filepath) {
-  return new Pipe(level, filepath);
 }
 
 function use(plugin) {
@@ -43,6 +45,11 @@ function use(plugin) {
   plugin(this);
 }
 
+// Inject Registries
+Formatter.registry = formatterRegistry;
+Severity.registry = severityRegistry;
+Notifier.registry = notifierRegistry;
+Logger.registry = loggerRegistry;
 
 const LogginJS = {
   Severity,
@@ -50,15 +57,17 @@ const LogginJS = {
   Notifier,
   Formatter,
   Logger,
-  Pipe,
 
   logger,
   notifier,
   formatter,
   severity,
-  merge,
-  pipe,
-  use
+  use,
+
+  loggerRegistry,
+  severityRegistry,
+  notifierRegistry,
+  formatterRegistry,
 };
 
 module.exports = LogginJS;
